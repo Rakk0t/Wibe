@@ -1,126 +1,114 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Таблица ПВД</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
-            background: #f5f5f5;
+            padding: 30px 20px;
+            background: #f0f2f5;
         }
         h1 {
-            color: #333;
+            color: #1a1a2e;
             text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            letter-spacing: 1px;
+        }
+        #table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 20px;
+            overflow-x: auto;
+            min-height: 300px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            overflow: hidden;
+            font-size: 14px;
         }
         th {
-            background: #2c3e50;
+            background: #16213e;
             color: white;
-            padding: 12px;
+            padding: 14px 12px;
             text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
         }
         td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #ddd;
+            padding: 12px;
+            border-bottom: 1px solid #e8eaed;
+            color: #333;
         }
         tr:hover {
-            background: #f1f9ff;
+            background: #f8f9fc;
         }
         .loading {
             text-align: center;
             font-size: 18px;
-            color: #666;
+            color: #888;
+            padding: 60px 0;
+        }
+        .error {
+            text-align: center;
+            color: #d32f2f;
             padding: 40px;
+            font-size: 16px;
+            background: #ffebee;
+            border-radius: 8px;
         }
     </style>
 </head>
 <body>
 
-    <h1>📋 Таблица ПВД</h1>
+    <h1>📊 Таблица ПВД</h1>
     <div id="table-container">
-        <div class="loading">⏳ Загрузка данных...</div>
+        <div class="loading">⏳ Загружаем данные...</div>
     </div>
 
     <script>
-        // ССЫЛКА НА ОПУБЛИКОВАННЫЙ CSV
-        const CSV_URL = '<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Таблица ПВД</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        th {
-            background: #2c3e50;
-            color: white;
-            padding: 12px;
-            text-align: left;
-        }
-        td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #ddd;
-        }
-        tr:hover {
-            background: #f1f9ff;
-        }
-        .loading {
-            text-align: center;
-            font-size: 18px;
-            color: #666;
-            padding: 40px;
-        }
-    </style>
-</head>
-<body>
-
-    <h1>📋 Таблица ПВД</h1>
-    <div id="table-container">
-        <div class="loading">⏳ Загрузка данных...</div>
-    </div>
-
-    <script>
-        // ССЫЛКА НА ОПУБЛИКОВАННЫЙ CSV
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vROnaT8IUxsWhQIr7SgxngcWydR4znoqE6TQBJrLJt5C-uNgaBbniZwfHtbgGVRMVbtVnzrdL9WWyoW/pub?gid=154944577&single=true&output=csv';
+        // ТВОЯ НОВАЯ ССЫЛКА НА ОПУБЛИКОВАННУЮ ТАБЛИЦУ CSV
+        const CSV_URL = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(
+            'https://docs.google.com/spreadsheets/d/e/2PACX-1vROnaT8IUxsWhQIr7SgxngcWydR4znoqE6TQBJrLJt5C-uNgaBbniZwfHtbgGVRMVbtVnzrdL9WWyoW/pub?gid=154944577&single=true&output=csv'
+        );
 
         async function loadTable() {
+            const container = document.getElementById('table-container');
+
             try {
                 const response = await fetch(CSV_URL);
-                const csvText = await response.text();
-                
-                // Парсим CSV в массив строк
-                const rows = csvText.split('\n').filter(row => row.trim() !== '');
-                const headers = rows[0].split(',').map(h => h.trim());
-                const data = rows.slice(1).map(row => row.split(',').map(cell => cell.trim()));
 
-                // Строим HTML-таблицу
+                if (!response.ok) {
+                    throw new Error('Сервер вернул ошибку: ' + response.status);
+                }
+
+                const csvText = await response.text();
+
+                if (!csvText.trim()) {
+                    throw new Error('Таблица пуста или не опубликована как CSV');
+                }
+
+                const rows = csvText.split('\n').filter(row => row.trim() !== '');
+
+                if (rows.length < 2) {
+                    throw new Error('В таблице太少 данных (нужна хотя бы шапка и одна строка)');
+                }
+
+                const headers = rows[0].split(',').map(h => h.trim());
+                const data = rows.slice(1).map(row =>
+                    row.split(',').map(cell => cell.trim())
+                );
+
                 let html = '<table>';
                 html += '<thead><tr>';
                 headers.forEach(h => {
@@ -130,6 +118,7 @@
 
                 data.forEach(row => {
                     html += '<tr>';
+                    while (row.length < headers.length) row.push('');
                     row.forEach(cell => {
                         html += `<td>${cell}</td>`;
                     });
@@ -137,52 +126,11 @@
                 });
 
                 html += '</tbody></table>';
-                document.getElementById('table-container').innerHTML = html;
+                container.innerHTML = html;
 
             } catch (error) {
-                document.getElementById('table-container').innerHTML = 
-                    `<p style="color:red;text-align:center;">❌ Ошибка загрузки: ${error.message}</p>`;
-            }
-        }
-
-        loadTable();
-    </script>
-
-</body>
-</html>';
-
-        async function loadTable() {
-            try {
-                const response = await fetch(CSV_URL);
-                const csvText = await response.text();
-                
-                // Парсим CSV в массив строк
-                const rows = csvText.split('\n').filter(row => row.trim() !== '');
-                const headers = rows[0].split(',').map(h => h.trim());
-                const data = rows.slice(1).map(row => row.split(',').map(cell => cell.trim()));
-
-                // Строим HTML-таблицу
-                let html = '<table>';
-                html += '<thead><tr>';
-                headers.forEach(h => {
-                    html += `<th>${h}</th>`;
-                });
-                html += '</tr></thead><tbody>';
-
-                data.forEach(row => {
-                    html += '<tr>';
-                    row.forEach(cell => {
-                        html += `<td>${cell}</td>`;
-                    });
-                    html += '</tr>';
-                });
-
-                html += '</tbody></table>';
-                document.getElementById('table-container').innerHTML = html;
-
-            } catch (error) {
-                document.getElementById('table-container').innerHTML = 
-                    `<p style="color:red;text-align:center;">❌ Ошибка загрузки: ${error.message}</p>`;
+                container.innerHTML = `<div class="error">❌ Ошибка: ${error.message}<br>
+                    <span style="font-size:14px;color:#666;">Проверь, что таблица опубликована (Файл → Опубликовать в интернете → CSV)</span></div>`;
             }
         }
 
