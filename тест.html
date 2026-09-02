@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Вайб-Квадраты</title>
+  <style>
+    * { margin: 0; padding: 0; overflow: hidden; background: #0b0b0b; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  // Звуки — просто чтобы было
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  function beep(freq) {
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'sawtooth';
+      gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.1);
+    } catch(e) { /* тишина, если звук заблокирован */ }
+  }
+
+  // Толпа квадратов
+  const boxes = [];
+  for (let i = 0; i < 25; i++) {
+    boxes.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: 20 + Math.random() * 50,
+      dx: (Math.random() - 0.5) * 4,
+      dy: (Math.random() - 0.5) * 4,
+      color: `hsl(${Math.random() * 360}, 80%, 60%)`
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (const b of boxes) {
+      b.x += b.dx;
+      b.y += b.dy;
+
+      // Отскок + звук
+      if (b.x + b.size > canvas.width || b.x < 0) {
+        b.dx *= -1;
+        beep(200 + Math.random() * 800);
+      }
+      if (b.y + b.size > canvas.height || b.y < 0) {
+        b.dy *= -1;
+        beep(200 + Math.random() * 800);
+      }
+
+      // Рисуем со свечением (потому что красиво)
+      ctx.shadowColor = b.color;
+      ctx.shadowBlur = 25;
+      ctx.fillStyle = b.color;
+      ctx.fillRect(b.x, b.y, b.size, b.size);
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  draw();
+</script>
+</body>
+</html>
